@@ -1,0 +1,158 @@
+{
+  "name": "redis_too_many_masters_incident",
+  "description": "The Redis too many masters incident occurs when there are too many master nodes in a Redis cluster, leading to connection issues and potential data loss. This can happen due to misconfiguration, network issues, or other factors, and requires immediate attention to prevent further damage.",
+  "params": [
+    {
+      "name": "REDIS_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "MAX_NUMBER_OF_MASTERS",
+      "value": ""
+    },
+    {
+      "name": "REDIS_CLUSTER_HOST",
+      "value": ""
+    },
+    {
+      "name": "REDIS_CLUSTER_IP",
+      "value": ""
+    },
+    {
+      "name": "REDIS_CLUSTER_PORT",
+      "value": ""
+    },
+    {
+      "name": "REDIS_PORT",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Redis too many masters incident\nThe Redis too many masters incident occurs when there are too many master nodes in a Redis cluster, leading to connection issues and potential data loss. This can happen due to misconfiguration, network issues, or other factors, and requires immediate attention to prevent further damage."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if Redis is running on the affected instance"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `systemctl status redis-server.service`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the Redis configuration file"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `cat /etc/redis/redis.conf`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the number of master nodes in the Redis cluster"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `redis-cli -h ${REDIS_CLUSTER_HOST} -p ${REDIS_CLUSTER_PORT} cluster nodes | grep \"master\" | wc -l`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the status of the Redis cluster"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `redis-cli -h ${REDIS_CLUSTER_HOST} -p ${REDIS_CLUSTER_PORT} cluster info`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the number of connections to the Redis cluster"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `redis-cli -h ${REDIS_CLUSTER_HOST} -p ${REDIS_CLUSTER_PORT} info clients | grep \"connected_clients\"`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the Redis logs for any errors or warnings"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `tail -f /var/log/redis/redis-server.log`"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Restart the Redis service"
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `systemctl restart redis-server.service`"
+    },
+    {
+      "name": "cell_16",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Network connectivity issues between Redis nodes, causing nodes to become isolated and designate themselves as master nodes."
+    },
+    {
+      "name": "cell_17",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_redis_cluster_health_check($REDIS_CLUSTER_IP, $REDIS_PORT)"
+    },
+    {
+      "name": "cell_18",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Reduce the number of master nodes in the Redis cluster to the recommended maximum, which varies based on the size and complexity of the system."
+    },
+    {
+      "name": "cell_19",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_redis_cluster_node_reduction($REDIS_CLUSTER_NAME, $MAX_NUMBER_OF_MASTERS)"
+    }
+  ]
+}
